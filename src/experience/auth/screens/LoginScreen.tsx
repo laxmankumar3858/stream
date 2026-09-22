@@ -1,0 +1,22 @@
+import { View, Text, Button } from 'react-native';
+
+const LoginScreen = ({ navigation }: any) => {
+  return (
+    <View
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <Text>Login Screen</Text>
+
+      <Button
+        title="Go to Signup"
+        onPress={() => navigation.navigate('Signup')}
+      />
+    </View>
+  );
+};
+
+export default LoginScreen;
