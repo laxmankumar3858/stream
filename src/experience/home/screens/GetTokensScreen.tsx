@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from '../../../context/AuthContext';
 
 const { width } = Dimensions.get('window');
 
@@ -74,14 +75,14 @@ interface GetTokensScreenProps {
 }
 
 const GetTokensScreen: React.FC<GetTokensScreenProps> = ({ navigation }) => {
-  const [balance, setBalance] = useState<number>(2);
+  const { user } = useAuth();
+  const balance = user?.coinBalance ?? 0;
   const [selectedPackageId, setSelectedPackageId] = useState<string>('p1');
   const [toastMessage, setToastMessage] = useState<string>('');
 
   const handlePurchase = (pkg: TokenPackage) => {
     setSelectedPackageId(pkg.id);
-    setBalance((prev) => prev + pkg.tokens);
-    setToastMessage(`Success! Purchased ${pkg.tokens} Tokens 🎉`);
+    setToastMessage(`Selected ${pkg.tokens} Tokens`);
     setTimeout(() => setToastMessage(''), 3000);
   };
 

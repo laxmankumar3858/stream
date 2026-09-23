@@ -22,7 +22,7 @@ interface ProfileScreenProps {
 
 const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   const { user, logout } = useAuth();
-  const [tokens, setTokens] = useState<number>(2);
+  const tokens = user?.coinBalance ?? 0;
   const [claimedDays, setClaimedDays] = useState<number[]>([1]); // Day 1 claimed
 
   const handleTabChange = (tab: string) => {
@@ -42,7 +42,6 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   const handleClaimBonus = (dayNumber: number) => {
     if (!claimedDays.includes(dayNumber)) {
       setClaimedDays((prev) => [...prev, dayNumber]);
-      setTokens((prev) => prev + 2);
     }
   };
 

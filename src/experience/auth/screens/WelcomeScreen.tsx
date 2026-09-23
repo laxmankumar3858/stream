@@ -12,19 +12,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../../context/AuthContext';
-import { getDeviceId } from '../../../services/authService';
-
-interface WelcomeScreenProps {
-  navigation?: any;
-  deviceIdProps?: string;
-}
-
-const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
-  navigation,
-  deviceIdProps,
-}) => {
+const WelcomeScreen: React.FC = () => {
   const { loginWithDeviceId, isLoading } = useAuth();
-  const [currentDeviceId] = useState<string>(deviceIdProps || getDeviceId());
   const [statusText, setStatusText] = useState<string>('');
   const [isChecked, setIsChecked] = useState<boolean>(false);
 
@@ -47,9 +36,14 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
     }
     try {
       setStatusText('Connecting to Live Stream Server...');
-      await loginWithDeviceId(currentDeviceId);
+      await loginWithDeviceId();
     } catch (err) {
-      setStatusText('Connection failed. Please try again.');
+      const message = err instanceof Error ? err.message : '';
+      setStatusText(
+        message.includes('register_installation')
+          ? 'Backend setup is incomplete. Please try again after applying the database migration.'
+          : 'Connection failed. Please try again.',
+      );
     }
   };
 
@@ -143,9 +137,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             )}
           </TouchableOpacity>
 
-          <Text style={styles.disclaimerText}>
-            Instant Guest Auth via Device ID ({currentDeviceId})
-          </Text>
+          <Text style={styles.disclaimerText}>Continue as guest</Text>
         </View>
       </SafeAreaView>
       </ImageBackground>
