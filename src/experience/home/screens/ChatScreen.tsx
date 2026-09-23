@@ -23,7 +23,6 @@ interface ChatScreenProps {
 }
 
 type ProfileFilter = 'all' | ProfileGender;
-
 const ChatScreen: React.FC<ChatScreenProps> = ({navigation}) => {
   const [filter, setFilter] = useState<ProfileFilter>('all');
   const profiles = useMemo(

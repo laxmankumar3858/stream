@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Alert } from 'react-native';
 import {
   View,
   Text,
@@ -8,10 +9,16 @@ import {
   StatusBar,
   Dimensions,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../../context/AuthContext';
+import {
+  createRazorpayOrder,
+  openRazorpayCheckout,
+  verifyAndCreditCoins,
+} from '../../../services/razorpayService';
 
 const { width } = Dimensions.get('window');
 
@@ -19,6 +26,7 @@ interface TokenPackage {
   id: string;
   tokens: number;
   price: string;
+  priceInRs: number;        // numeric value for Razorpay order
   discountBadge?: string;
   onceBadge?: string;
   isPopular?: boolean;
@@ -29,45 +37,18 @@ const TOKEN_PACKAGES: TokenPackage[] = [
     id: 'p1',
     tokens: 120,
     price: 'Rs 81',
+    priceInRs: 81,
     discountBadge: '60% off',
     onceBadge: 'ONCE',
     isPopular: true,
   },
-  {
-    id: 'p2',
-    tokens: 160,
-    price: 'Rs 163',
-  },
-  {
-    id: 'p3',
-    tokens: 240,
-    price: 'Rs 245',
-  },
-  {
-    id: 'p4',
-    tokens: 530,
-    price: 'Rs 487',
-  },
-  {
-    id: 'p5',
-    tokens: 880,
-    price: 'Rs 807',
-  },
-  {
-    id: 'p6',
-    tokens: 1800,
-    price: 'Rs 1608',
-  },
-  {
-    id: 'p7',
-    tokens: 4600,
-    price: 'Rs 4012',
-  },
-  {
-    id: 'p8',
-    tokens: 10000,
-    price: 'Rs 8017',
-  },
+  { id: 'p2', tokens: 160,   price: 'Rs 163',  priceInRs: 163  },
+  { id: 'p3', tokens: 240,   price: 'Rs 245',  priceInRs: 245  },
+  { id: 'p4', tokens: 530,   price: 'Rs 487',  priceInRs: 487  },
+  { id: 'p5', tokens: 880,   price: 'Rs 807',  priceInRs: 807  },
+  { id: 'p6', tokens: 1800,  price: 'Rs 1608', priceInRs: 1608 },
+  { id: 'p7', tokens: 4600,  price: 'Rs 4012', priceInRs: 4012 },
+  { id: 'p8', tokens: 10000, price: 'Rs 8017', priceInRs: 8017 },
 ];
 
 interface GetTokensScreenProps {
@@ -75,15 +56,62 @@ interface GetTokensScreenProps {
 }
 
 const GetTokensScreen: React.FC<GetTokensScreenProps> = ({ navigation }) => {
-  const { user } = useAuth();
+  const { user, deviceId, updateCoinBalance } = useAuth();
   const balance = user?.coinBalance ?? 0;
   const [selectedPackageId, setSelectedPackageId] = useState<string>('p1');
   const [toastMessage, setToastMessage] = useState<string>('');
+  const [isPurchasing, setIsPurchasing] = useState(false);
 
-  const handlePurchase = (pkg: TokenPackage) => {
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(''), 3500);
+  };
+
+  const handlePurchase = async (pkg: TokenPackage) => {
+    if (isPurchasing || !deviceId) {
+      return;
+    }
     setSelectedPackageId(pkg.id);
-    setToastMessage(`Selected ${pkg.tokens} Tokens`);
-    setTimeout(() => setToastMessage(''), 3000);
+    setIsPurchasing(true);
+
+    try {
+      // Step 1: Create Razorpay order
+      const order = await createRazorpayOrder(pkg.priceInRs);
+
+      // Step 2: Open Razorpay checkout sheet
+      const paymentData = await openRazorpayCheckout(
+        order,
+        '',             // email (optional)
+        user?.name ?? 'User',
+      );
+
+      // Step 3: Verify on server + credit coins
+      const newBalance = await verifyAndCreditCoins(
+        paymentData.razorpay_order_id,
+        paymentData.razorpay_payment_id,
+        paymentData.razorpay_signature,
+        deviceId,
+        pkg.tokens,
+      );
+
+      // Step 4: Update local coin balance
+      await updateCoinBalance(newBalance);
+      showToast(`✅ ${pkg.tokens} Tokens added! Balance: ${newBalance}`);
+    } catch (error: any) {
+      // User cancelled payment — Razorpay returns error code 0
+      const isCancelled =
+        error?.code === 0 ||
+        error?.description === 'Payment cancelled by user';
+
+      if (!isCancelled) {
+        Alert.alert(
+          'Payment Failed',
+          error?.description ?? error?.message ?? 'Kuch gadbad ho gayi. Dobara try karein.',
+        );
+      }
+    } finally {
+      setIsPurchasing(false);
+    }
   };
 
   return (
@@ -135,15 +163,18 @@ const GetTokensScreen: React.FC<GetTokensScreenProps> = ({ navigation }) => {
             <View style={styles.gridContainer}>
               {TOKEN_PACKAGES.map((pkg) => {
                 const isSelected = selectedPackageId === pkg.id;
+                const isLoadingThis = isPurchasing && isSelected;
                 return (
                   <TouchableOpacity
                     key={pkg.id}
                     style={[
                       styles.packageBox,
                       isSelected && styles.packageBoxSelected,
+                      isPurchasing && !isSelected && styles.packageBoxDimmed,
                     ]}
-                    onPress={() => handlePurchase(pkg)}
+                    onPress={() => void handlePurchase(pkg)}
                     activeOpacity={0.8}
+                    disabled={isPurchasing}
                   >
                     {/* Discount Badge */}
                     {pkg.discountBadge ? (
@@ -159,16 +190,22 @@ const GetTokensScreen: React.FC<GetTokensScreenProps> = ({ navigation }) => {
                       </View>
                     ) : null}
 
-                    {/* Token Icon & Amount */}
+                    {/* Token Icon & Amount — show spinner if loading this tile */}
                     <View style={styles.packageContent}>
-                      <View style={styles.tokenIconWrapper}>
-                        <Image
-                          source={require('../../../assets/wallet.png')}
-                          style={{ width: 28, height: 28 }}
-                          resizeMode="contain"
-                        />
-                      </View>
-                      <Text style={styles.tokenAmountText}>{pkg.tokens}</Text>
+                      {isLoadingThis ? (
+                        <ActivityIndicator size="small" color="#FF2A85" />
+                      ) : (
+                        <>
+                          <View style={styles.tokenIconWrapper}>
+                            <Image
+                              source={require('../../../assets/wallet.png')}
+                              style={{ width: 28, height: 28 }}
+                              resizeMode="contain"
+                            />
+                          </View>
+                          <Text style={styles.tokenAmountText}>{pkg.tokens}</Text>
+                        </>
+                      )}
                     </View>
 
                     {/* Price Strip */}
@@ -292,6 +329,9 @@ const styles = StyleSheet.create({
   packageBoxSelected: {
     borderColor: '#FF2A85',
     backgroundColor: '#2A223D',
+  },
+  packageBoxDimmed: {
+    opacity: 0.4,
   },
   discountBadgePill: {
     position: 'absolute',

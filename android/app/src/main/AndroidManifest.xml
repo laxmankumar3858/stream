@@ -13,6 +13,30 @@
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
 
+    <!--
+      Required for Android 11+ (API 30+) package visibility.
+      Without this block, Razorpay cannot detect installed UPI apps
+      (Google Pay, PhonePe, Paytm, BHIM, etc.) and they won't appear
+      in the payment methods list.
+    -->
+    <queries>
+        <!-- UPI intent — allows detection of any UPI-capable app -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="upi" android:host="pay" />
+        </intent>
+        <!-- Google Pay -->
+        <package android:name="com.google.android.apps.nbu.paisa.user" />
+        <!-- PhonePe -->
+        <package android:name="com.phonepe.app" />
+        <!-- Paytm -->
+        <package android:name="net.one97.paytm" />
+        <!-- BHIM -->
+        <package android:name="in.org.npci.upiapp" />
+        <!-- Amazon Pay -->
+        <package android:name="in.amazon.mShop.android.shopping" />
+    </queries>
+
     <application
       android:name=".MainApplication"
       android:label="@string/app_name"
@@ -36,3 +60,4 @@
       </activity>
     </application>
 </manifest>
+
