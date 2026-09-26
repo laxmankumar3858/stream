@@ -7,6 +7,7 @@ import {
   loginWithDeviceIdApi,
   saveGenderApi,
 } from '../services/authService';
+import { initAutoChatScheduler } from '../services/autoChatService';
 
 const SESSION_STORAGE_KEY = '@stream/anonymous_session';
 
@@ -90,6 +91,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     restoreSession();
   }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      void initAutoChatScheduler(user?.gender ?? null);
+    }
+  }, [isAuthenticated, user?.gender]);
 
   const loginWithDeviceId = async () => {
     try {

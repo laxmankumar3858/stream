@@ -197,11 +197,7 @@ const GetTokensScreen: React.FC<GetTokensScreenProps> = ({ navigation }) => {
                       ) : (
                         <>
                           <View style={styles.tokenIconWrapper}>
-                            <Image
-                              source={require('../../../assets/wallet.png')}
-                              style={{ width: 28, height: 28 }}
-                              resizeMode="contain"
-                            />
+                            <Text style={{ fontSize: 26, marginRight: 6 }}>🪙</Text>
                           </View>
                           <Text style={styles.tokenAmountText}>{pkg.tokens}</Text>
                         </>
@@ -312,11 +308,11 @@ const styles = StyleSheet.create({
   gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: 12,
+    gap: 5,
+    alignItems: 'center',
   },
   packageBox: {
-    width: (width - 72) / 3,
+    width: '32%',
     height: 125,
     borderRadius: 16,
     backgroundColor: '#231F33',

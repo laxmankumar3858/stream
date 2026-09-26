@@ -35,7 +35,7 @@ const WelcomeScreen: React.FC = () => {
       return;
     }
     try {
-      setStatusText('Connecting to Live Stream Server...');
+      setStatusText('Connecting to Live Server...');
       await loginWithDeviceId();
     } catch (err) {
       const message = err instanceof Error ? err.message : '';

@@ -19,6 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import BottomNavBar from '../../../components/BottomNavBar';
 import LinearGradient from 'react-native-linear-gradient';
 import InsufficientBalanceModal from '../../../components/InsufficientBalanceModal';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import {
   enableCallSpeaker,
   resetCallAudioRoute,
@@ -68,73 +69,35 @@ const getErrorMessage = (error: unknown): string => {
   return '';
 };
 
-interface OnlineUser {
-  id: string;
-  name: string;
-  age: number;
-  country: string;
-  flag: string;
-  avatar: string;
-  videoUrl?: string;
-  bio: string;
-}
-
-const ORBIT_USERS: OnlineUser[] = [
-  {
-    id: 'u1',
-    name: 'Sophia',
-    age: 22,
-    country: 'United States',
-    flag: '🇺🇸',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
-    bio: 'Music lover & gamer 🎧',
-  },
-  {
-    id: 'u2',
-    name: 'Elena',
-    age: 24,
-    country: 'Spain',
-    flag: '🇪🇸',
-    avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&auto=format&fit=crop&q=80',
-    bio: 'Traveling the world ✈️',
-  },
-  {
-    id: 'u3',
-    name: 'Chloe',
-    age: 21,
-    country: 'Canada',
-    flag: '🇨🇦',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&auto=format&fit=crop&q=80',
-    bio: 'Coffee & late night chats ☕',
-  },
-  {
-    id: 'u4',
-    name: 'Mia',
-    age: 23,
-    country: 'United Kingdom',
-    flag: '🇬🇧',
-    avatar: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&auto=format&fit=crop&q=80',
-    bio: 'Let us talk about movies 🎬',
-  },
-  {
-    id: 'u5',
-    name: 'Amara',
-    age: 20,
-    country: 'Brazil',
-    flag: '🇧🇷',
-    avatar: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=400&auto=format&fit=crop&q=80',
-    bio: 'Dance & fitness enthusiast 💃',
-  },
-  {
-    id: 'u6',
-    name: 'Aria',
-    age: 22,
-    country: 'France',
-    flag: '🇫🇷',
-    avatar: 'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=400&auto=format&fit=crop&q=80',
-    bio: 'Art student in Paris 🎨',
-  },
+const ORBIT_AVATARS_POOL: string[] = [
+  'https://i.pinimg.com/736x/7c/71/7a/7c717a818b797e8ab0f65cde1a618f68.jpg',
+  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSjBYYY1lIMST0Kl1zirhFYx5Elek4nbkX0H2Fi6_oBWuUKp9UX1PhcP871&s=10',
+  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6AewTGpykFrF3dyHLF9YNZAyYatF3n2ttHHd1_PU2ftzzkZvVbwYJDgMG&s=10',
+  'https://mastdp.in/wp-content/uploads/profile-cute-girl-image.webp',
+  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRh-cmpi90HQZW4D6rfJOBUFp31rdemKNsSqLYDSSSniqYE9SupH3AIF9U&s=10',
+  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS-NhIAZ3EuyFK7hAmJprvXS5Wjcdx-zOhuOOXYqpCmwBtMERSBsPEUVAX8&s=10',
+  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=400&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=400&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=400&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=400&auto=format&fit=crop&q=80',
+  ...Array.from(
+    { length: 50 },
+    (_, i) => `https://randomuser.me/api/portraits/women/${i + 1}.jpg`,
+  ),
 ];
+
+const getRandomOrbitAvatars = (count = 6): string[] => {
+  const shuffled = [...ORBIT_AVATARS_POOL].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, count);
+};
 
 interface HomeScreenProps {
   navigation?: any;
@@ -143,6 +106,7 @@ interface HomeScreenProps {
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const { user, deviceId, updateCoinBalance } = useAuth();
   const coins = user?.coinBalance ?? 0;
+  const [orbitAvatars, setOrbitAvatars] = useState<string[]>(getRandomOrbitAvatars);
   const [isMatching, setIsMatching] = useState<boolean>(false);
   const [isCallActive, setIsCallActive] = useState<boolean>(false);
   const [showInsufficientModal, setShowInsufficientModal] = useState<boolean>(false);
@@ -188,30 +152,151 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [showHearts, setShowHearts] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<string>('');
 
-  // Radar Animation
+  // Enhanced Radar & Profile Animations
   const scanAnim = useRef(new Animated.Value(0)).current;
-  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const pulseAnim1 = useRef(new Animated.Value(0)).current;
+  const pulseAnim2 = useRef(new Animated.Value(0)).current;
+  const pulseAnim3 = useRef(new Animated.Value(0)).current;
+  const rotateRadarAnim = useRef(new Animated.Value(0)).current;
+  const centralPulseAnim = useRef(new Animated.Value(1)).current;
+  const avatarScaleAnim = useRef(new Animated.Value(1)).current;
   const floatAnim = useRef(new Animated.Value(0)).current;
 
-  // Star Background animation & radar rotation
+  // Star Background animation & continuous gentle float
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
         Animated.timing(floatAnim, {
           toValue: 1,
-          duration: 3000,
+          duration: 3200,
           easing: Easing.inOut(Easing.sin),
           useNativeDriver: true,
         }),
         Animated.timing(floatAnim, {
           toValue: 0,
-          duration: 3000,
+          duration: 3200,
           easing: Easing.inOut(Easing.sin),
           useNativeDriver: true,
         }),
       ])
     ).start();
-  }, [floatAnim]);
+
+    // Continuous subtle central pulse
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(centralPulseAnim, {
+          toValue: 1.12,
+          duration: 1800,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(centralPulseAnim, {
+          toValue: 1,
+          duration: 1800,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [floatAnim, centralPulseAnim]);
+
+  // Handle active matching radar animations & fast avatar cycling during match search
+  useEffect(() => {
+    let cyclingInterval: ReturnType<typeof setInterval> | null = null;
+    let pulseLoop: Animated.CompositeAnimation | null = null;
+    let rotateLoop: Animated.CompositeAnimation | null = null;
+    let avatarScaleLoop: Animated.CompositeAnimation | null = null;
+
+    if (isMatching) {
+      // 1. Rapidly cycle orbit avatars to give a high-energy searching feel
+      cyclingInterval = setInterval(() => {
+        setOrbitAvatars(getRandomOrbitAvatars());
+      }, 350);
+
+      // 2. Continuous 360-degree radar beam rotation
+      rotateRadarAnim.setValue(0);
+      rotateLoop = Animated.loop(
+        Animated.timing(rotateRadarAnim, {
+          toValue: 1,
+          duration: 2400,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        })
+      );
+      rotateLoop.start();
+
+      // 3. Avatar pulsing animation
+      avatarScaleLoop = Animated.loop(
+        Animated.sequence([
+          Animated.timing(avatarScaleAnim, {
+            toValue: 1.18,
+            duration: 500,
+            easing: Easing.ease,
+            useNativeDriver: true,
+          }),
+          Animated.timing(avatarScaleAnim, {
+            toValue: 0.92,
+            duration: 500,
+            easing: Easing.ease,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      avatarScaleLoop.start();
+
+      // 4. Staggered triple pulse waves
+      const createPulseWave = (anim: Animated.Value, delay: number) => {
+        return Animated.loop(
+          Animated.sequence([
+            Animated.delay(delay),
+            Animated.timing(anim, {
+              toValue: 1,
+              duration: 2000,
+              easing: Easing.out(Easing.quad),
+              useNativeDriver: true,
+            }),
+            Animated.timing(anim, {
+              toValue: 0,
+              duration: 0,
+              useNativeDriver: true,
+            }),
+          ])
+        );
+      };
+
+      pulseAnim1.setValue(0);
+      pulseAnim2.setValue(0);
+      pulseAnim3.setValue(0);
+
+      pulseLoop = Animated.parallel([
+        createPulseWave(pulseAnim1, 0),
+        createPulseWave(pulseAnim2, 650),
+        createPulseWave(pulseAnim3, 1300),
+      ]);
+      pulseLoop.start();
+    } else {
+      pulseAnim1.setValue(0);
+      pulseAnim2.setValue(0);
+      pulseAnim3.setValue(0);
+      rotateRadarAnim.setValue(0);
+      avatarScaleAnim.setValue(1);
+    }
+
+    return () => {
+      if (cyclingInterval) clearInterval(cyclingInterval);
+      if (pulseLoop) pulseLoop.stop();
+      if (rotateLoop) rotateLoop.stop();
+      if (avatarScaleLoop) avatarScaleLoop.stop();
+    };
+  }, [isMatching, rotateRadarAnim, avatarScaleAnim, pulseAnim1, pulseAnim2, pulseAnim3]);
+
+  // Periodic refresh of radar orbit avatars
+  useEffect(() => {
+    const avatarInterval = setInterval(() => {
+      setOrbitAvatars(getRandomOrbitAvatars());
+    }, 10000);
+    return () => clearInterval(avatarInterval);
+  }, []);
 
   // Call Timer Effect
   useEffect(() => {
@@ -804,6 +889,38 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     outputRange: [-6, 6],
   });
 
+  const rotateBeamInterpolate = rotateRadarAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  const wave1Scale = pulseAnim1.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.25, 1.85],
+  });
+  const wave1Opacity = pulseAnim1.interpolate({
+    inputRange: [0, 0.7, 1],
+    outputRange: [0.85, 0.35, 0],
+  });
+
+  const wave2Scale = pulseAnim2.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.25, 1.85],
+  });
+  const wave2Opacity = pulseAnim2.interpolate({
+    inputRange: [0, 0.7, 1],
+    outputRange: [0.85, 0.35, 0],
+  });
+
+  const wave3Scale = pulseAnim3.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.25, 1.85],
+  });
+  const wave3Opacity = pulseAnim3.interpolate({
+    inputRange: [0, 0.7, 1],
+    outputRange: [0.85, 0.35, 0],
+  });
+
   return (
     <LinearGradient
       colors={['#0B132B', '#1C1035', '#4A0E4E', '#80065D']}
@@ -867,71 +984,185 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             <View style={[styles.orbitEllipse, styles.orbitMiddle]} />
             <View style={[styles.orbitEllipse, styles.orbitInner]} />
 
-            {/* Pulse Beam on Matching */}
+            {/* Central Radar Pulse Node */}
+            <Animated.View
+              style={[
+                styles.centralRadarHub,
+                { transform: [{ scale: isMatching ? avatarScaleAnim : centralPulseAnim }] },
+              ]}
+            >
+              <View style={styles.centralHubCore}>
+                <Ionicons
+                  name={isMatching ? "radio" : "compass"}
+                  size={24}
+                  color="#FFFFFF"
+                />
+              </View>
+            </Animated.View>
+
+            {/* Multi-layered Radar Ripple Waves on Matching */}
             {isMatching && (
-              <Animated.View
-                style={[
-                  styles.radarPulseWave,
-                  {
-                    transform: [{ scale: pulseAnim }],
-                  },
-                ]}
-              />
+              <>
+                <Animated.View
+                  style={[
+                    styles.radarPulseWave,
+                    {
+                      transform: [{ scale: wave1Scale }],
+                      opacity: wave1Opacity,
+                    },
+                  ]}
+                />
+                <Animated.View
+                  style={[
+                    styles.radarPulseWave,
+                    {
+                      transform: [{ scale: wave2Scale }],
+                      opacity: wave2Opacity,
+                      borderColor: '#9333EA',
+                    },
+                  ]}
+                />
+                <Animated.View
+                  style={[
+                    styles.radarPulseWave,
+                    {
+                      transform: [{ scale: wave3Scale }],
+                      opacity: wave3Opacity,
+                      borderColor: '#F43F5E',
+                    },
+                  ]}
+                />
+
+                {/* Rotating Radar Scan Beam Line */}
+                <Animated.View
+                  style={[
+                    styles.radarScanBeamWrapper,
+                    {
+                      transform: [{ rotate: rotateBeamInterpolate }],
+                    },
+                  ]}
+                >
+                  <LinearGradient
+                    colors={['rgba(255, 42, 133, 0.7)', 'rgba(255, 42, 133, 0.05)', 'transparent']}
+                    style={styles.radarScanBeamLine}
+                  />
+                </Animated.View>
+              </>
             )}
 
             {/* Floating User Avatars on Radar */}
             <Animated.View
               style={[
                 styles.avatarBubbleContainer,
-                { top: '8%', left: '32%', transform: [{ translateY: floatY }] },
+                {
+                  top: '8%',
+                  left: '32%',
+                  transform: [
+                    { translateY: floatY },
+                    { scale: isMatching ? avatarScaleAnim : 1 },
+                  ],
+                },
               ]}
             >
-              <Image source={{ uri: ORBIT_USERS[0].avatar }} style={styles.avatarBubble} />
+              <View style={styles.avatarWrapper}>
+                <Image source={{ uri: orbitAvatars[0] }} style={styles.avatarBubble} />
+                <View style={styles.onlineDot} />
+              </View>
             </Animated.View>
 
             <Animated.View
               style={[
                 styles.avatarBubbleContainer,
-                { top: '22%', left: '62%', transform: [{ translateY: Animated.multiply(floatY, -1) }] },
+                {
+                  top: '22%',
+                  left: '62%',
+                  transform: [
+                    { translateY: Animated.multiply(floatY, -1) },
+                    { scale: isMatching ? avatarScaleAnim : 1 },
+                  ],
+                },
               ]}
             >
-              <Image source={{ uri: ORBIT_USERS[1].avatar }} style={styles.avatarBubble} />
+              <View style={styles.avatarWrapper}>
+                <Image source={{ uri: orbitAvatars[1] }} style={styles.avatarBubble} />
+                <View style={styles.onlineDot} />
+              </View>
             </Animated.View>
 
             <Animated.View
               style={[
                 styles.avatarBubbleContainer,
-                { top: '28%', left: '18%', transform: [{ translateY: floatY }] },
+                {
+                  top: '28%',
+                  left: '18%',
+                  transform: [
+                    { translateY: floatY },
+                    { scale: isMatching ? avatarScaleAnim : 1 },
+                  ],
+                },
               ]}
             >
-              <Image source={{ uri: ORBIT_USERS[2].avatar }} style={styles.avatarBubbleSmall} />
+              <View style={styles.avatarWrapper}>
+                <Image source={{ uri: orbitAvatars[2] }} style={styles.avatarBubbleSmall} />
+                <View style={[styles.onlineDot, { width: 8, height: 8, borderRadius: 4 }]} />
+              </View>
             </Animated.View>
 
             <Animated.View
               style={[
                 styles.avatarBubbleContainer,
-                { top: '35%', left: '42%', transform: [{ translateY: Animated.multiply(floatY, -0.8) }] },
+                {
+                  top: '35%',
+                  left: '42%',
+                  transform: [
+                    { translateY: Animated.multiply(floatY, -0.8) },
+                    { scale: isMatching ? avatarScaleAnim : 1 },
+                  ],
+                },
               ]}
             >
-              <Image source={{ uri: ORBIT_USERS[3].avatar }} style={styles.avatarBubbleTiny} />
+              <View style={styles.avatarWrapper}>
+                <Image source={{ uri: orbitAvatars[3] }} style={styles.avatarBubbleTiny} />
+                <View style={[styles.onlineDot, { width: 6, height: 6, borderRadius: 3 }]} />
+              </View>
             </Animated.View>
 
             <Animated.View
               style={[
                 styles.avatarBubbleContainer,
-                { top: '38%', left: '72%', transform: [{ translateY: floatY }] },
+                {
+                  top: '38%',
+                  left: '72%',
+                  transform: [
+                    { translateY: floatY },
+                    { scale: isMatching ? avatarScaleAnim : 1 },
+                  ],
+                },
               ]}
             >
-              <Image source={{ uri: ORBIT_USERS[4].avatar }} style={styles.avatarBubble} />
+              <View style={styles.avatarWrapper}>
+                <Image source={{ uri: orbitAvatars[4] }} style={styles.avatarBubble} />
+                <View style={styles.onlineDot} />
+              </View>
             </Animated.View>
 
             <Animated.View
               style={[
                 styles.avatarBubbleContainer,
-                { top: '48%', left: '26%', transform: [{ translateY: Animated.multiply(floatY, -1.2) }] },
+                {
+                  top: '48%',
+                  left: '26%',
+                  transform: [
+                    { translateY: Animated.multiply(floatY, -1.2) },
+                    { scale: isMatching ? avatarScaleAnim : 1 },
+                  ],
+                },
               ]}
             >
-              <Image source={{ uri: ORBIT_USERS[5].avatar }} style={styles.avatarBubble} />
+              <View style={styles.avatarWrapper}>
+                <Image source={{ uri: orbitAvatars[5] }} style={styles.avatarBubble} />
+                <View style={styles.onlineDot} />
+              </View>
             </Animated.View>
           </View>
 
@@ -1045,11 +1276,11 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 <View style={styles.callUserTextCol}>
                   <View style={styles.callUserNameRow}>
                     <Text style={styles.callUserName}>
-                      {fallbackVideo ? 'Video match' : 'Live user'}
+                      {fallbackVideo ? 'Live' : 'Live user'}
                     </Text>
                   </View>
                   <Text style={styles.callUserBio} numberOfLines={1}>
-                    {fallbackVideo ? 'Fallback connection' : 'Peer-to-peer call'}
+                    {fallbackVideo ? 'connection' : 'Peer-to-peer call'}
                   </Text>
                 </View>
               </View>
@@ -1086,7 +1317,11 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 onPress={toggleMute}
                 activeOpacity={0.8}
               >
-                <Text style={styles.controlIcon}>{isMuted ? '🔇' : '🎙️'}</Text>
+                <Ionicons
+                  name={isMuted ? 'mic-off' : 'mic'}
+                  size={22}
+                  color="#FFFFFF"
+                />
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -1094,7 +1329,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 onPress={triggerHeartEffect}
                 activeOpacity={0.8}
               >
-                <Text style={styles.controlIcon}>💖</Text>
+                <Ionicons name="heart" size={22} color="#FF2A85" />
               </TouchableOpacity>
 
               {/* End Call Button */}
@@ -1103,7 +1338,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 onPress={handleEndCall}
                 activeOpacity={0.85}
               >
-                <Text style={styles.endCallIcon}>📞</Text>
+                <Ionicons
+                  name="call"
+                  size={26}
+                  color="#FFFFFF"
+                  style={{ transform: [{ rotate: '135deg' }] }}
+                />
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -1111,7 +1351,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 onPress={switchCamera}
                 activeOpacity={0.8}
               >
-                <Text style={styles.controlIcon}>🔄</Text>
+                <Ionicons name="camera-reverse" size={22} color="#FFFFFF" />
               </TouchableOpacity>
 
               {/* Next Match Button */}
@@ -1120,7 +1360,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 onPress={handleNextMatch}
                 activeOpacity={0.85}
               >
-                <Text style={styles.nextMatchText}>Next ⏭️</Text>
+                <Text style={styles.nextMatchText}>Next</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1256,15 +1496,77 @@ const styles = StyleSheet.create({
     height: width * 0.6,
     borderColor: 'rgba(219, 39, 119, 0.8)',
   },
+  centralRadarHub: {
+    position: 'absolute',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255, 42, 133, 0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FF2A85',
+    shadowColor: '#FF2A85',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.9,
+    shadowRadius: 15,
+    elevation: 10,
+    zIndex: 5,
+  },
+  centralHubCore: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#FF2A85',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radarScanBeamWrapper: {
+    position: 'absolute',
+    width: width * 0.95,
+    height: width * 0.95,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 4,
+  },
+  radarScanBeamLine: {
+    position: 'absolute',
+    top: 0,
+    width: 3,
+    height: (width * 0.95) / 2,
+    borderRadius: 1.5,
+  },
   radarPulseWave: {
     position: 'absolute',
-    width: width * 0.7,
-    height: width * 0.7,
-    borderRadius: (width * 0.7) / 2,
-    backgroundColor: 'rgba(255, 42, 133, 0.25)',
+    width: width * 0.75,
+    height: width * 0.75,
+    borderRadius: (width * 0.75) / 2,
+    borderWidth: 2,
+    borderColor: '#FF2A85',
+    backgroundColor: 'rgba(255, 42, 133, 0.15)',
   },
   avatarBubbleContainer: {
     position: 'absolute',
+    zIndex: 10,
+  },
+  avatarWrapper: {
+    position: 'relative',
+    shadowColor: '#FF2A85',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  onlineDot: {
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#10B981',
+    borderWidth: 1.5,
+    borderColor: '#0B132B',
   },
   avatarBubble: {
     width: 54,
@@ -1416,10 +1718,10 @@ const styles = StyleSheet.create({
   remoteUserInfoPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.55)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+    backgroundColor: '#4c04049e',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
   },
   callUserAvatar: {
     width: 36,
@@ -1440,14 +1742,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   callUserBio: {
-    color: 'rgba(255, 255, 255, 0.75)',
+    color: '#ffff',
     fontSize: 11,
     maxWidth: 140,
   },
   callTimerBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    backgroundColor: '#4500008c',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 16,
@@ -1555,6 +1857,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
   },
   nextMatchText: {
     color: '#FFFFFF',

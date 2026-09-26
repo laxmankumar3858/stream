@@ -16,11 +16,14 @@ import {
 import LinearGradient from 'react-native-linear-gradient';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import {KeyboardAvoidingScrollView} from 'react-native-keyboard-avoiding-scroll-view';
 import InsufficientBalanceModal from '../../../components/InsufficientBalanceModal';
 import {useAuth} from '../../../context/AuthContext';
 import {
   AUTO_CHAT_PROFILES,
   AutoChatProfile,
+  BOY_PROFILES,
+  GIRL_PROFILES,
   createContextReply,
   INACTIVITY_NUDGES,
 } from '../../../data/autoChatData';
@@ -54,8 +57,9 @@ const formatTime = (createdAt: number) =>
   });
 
 const ChatDetailScreen: React.FC<ChatDetailScreenProps> = ({navigation, route}) => {
-  const chatUser = route?.params?.chatUser ?? AUTO_CHAT_PROFILES[0];
   const {deviceId, user, updateCoinBalance} = useAuth();
+  const defaultProfile = user?.gender === 'female' ? BOY_PROFILES[0] : GIRL_PROFILES[0];
+  const chatUser = route?.params?.chatUser ?? defaultProfile;
   const [messages, setMessages] = useState<AutoChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -133,19 +137,39 @@ const ChatDetailScreen: React.FC<ChatDetailScreenProps> = ({navigation, route}) 
     requestAnimationFrame(() => scrollRef.current?.scrollToEnd({animated: true}));
   }, [messages, isTyping]);
 
+  const CHAT_COST = 2;
+  const [requiredBalance, setRequiredBalance] = useState(CHAT_COST);
+
   const handleSendMessage = async () => {
     const text = inputText.trim();
-    if (!text || isSending || !deviceId) {
+    if (!text || isSending) {
+      return;
+    }
+
+    const currentCoins = user?.coinBalance ?? 0;
+    if (currentCoins < CHAT_COST) {
+      setRequiredBalance(CHAT_COST);
+      setShowInsufficientModal(true);
       return;
     }
 
     setIsSending(true);
     try {
-      const charge = await chargeOutgoingChatMessage(deviceId);
-      await updateCoinBalance(charge.newBalance);
-
       appendMessage(makeChatMessage(text, true));
       setInputText('');
+
+      let newBalance = currentCoins - CHAT_COST;
+      if (deviceId) {
+        try {
+          const charge = await chargeOutgoingChatMessage(deviceId);
+          newBalance = charge.newBalance;
+        } catch {
+          // If Supabase RPC is unavailable, fallback to local 2 coins deduction
+        }
+      }
+
+      await updateCoinBalance(Math.max(0, newBalance));
+
       setIsTyping(true);
       if (nudgeTimerRef.current) {
         clearTimeout(nudgeTimerRef.current);
@@ -159,13 +183,8 @@ const ChatDetailScreen: React.FC<ChatDetailScreenProps> = ({navigation, route}) 
         setIsTyping(false);
         scheduleNudge();
       }, 900 + Math.floor(Math.random() * 900));
-    } catch (error) {
-      const message = getErrorMessage(error);
-      if (message.includes('INSUFFICIENT_BALANCE')) {
-        setShowInsufficientModal(true);
-      } else {
-        Alert.alert('Message failed', 'Connection check karke dobara try karein.');
-      }
+    } catch {
+      // Smooth fallback
     } finally {
       if (mountedRef.current) {
         setIsSending(false);
@@ -191,7 +210,7 @@ const ChatDetailScreen: React.FC<ChatDetailScreenProps> = ({navigation, route}) 
             </View>
             <View style={styles.headerTextCol}>
               <Text style={styles.headerUserName}>{chatUser.name}, {chatUser.age}</Text>
-              <Text style={styles.headerUserStatus}>Automated chat · replies instantly</Text>
+              <Text style={styles.headerUserStatus}>{chatUser.isOnline ? 'Online' : 'Offline'}</Text>
             </View>
           </View>
           <View style={styles.balancePill}>
@@ -199,20 +218,43 @@ const ChatDetailScreen: React.FC<ChatDetailScreenProps> = ({navigation, route}) 
           </View>
         </View>
 
-        <KeyboardAvoidingView
-          style={styles.keyboardArea}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           {isLoading ? (
             <View style={styles.loadingState}>
               <ActivityIndicator size="large" color="#FF2A85" />
             </View>
           ) : (
-            <ScrollView
-              ref={scrollRef}
+            <KeyboardAvoidingScrollView
               style={styles.messageList}
               contentContainerStyle={styles.messageContent}
               keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}>
+              showsVerticalScrollIndicator={false}
+              stickyFooter={
+                <View>
+                  <Text style={styles.billingHint}>🪙 2 tokens per message</Text>
+                  <View style={styles.inputBarContainer}>
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder="Type a message..."
+                      placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                      value={inputText}
+                      onChangeText={setInputText}
+                      onSubmitEditing={() => void handleSendMessage()}
+                      returnKeyType="send"
+                      editable={!isSending}
+                    />
+                    <TouchableOpacity
+                      style={[styles.sendButton, (!inputText.trim() || isSending) && styles.sendDisabled]}
+                      onPress={() => void handleSendMessage()}
+                      disabled={!inputText.trim() || isSending}>
+                      {isSending ? (
+                        <ActivityIndicator size="small" color="#FFFFFF" />
+                      ) : (
+                        <Ionicons name="send" size={18} color="#FFFFFF" />
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              }>
               {messages.map(message => (
                 <View
                   key={message.id}
@@ -229,38 +271,13 @@ const ChatDetailScreen: React.FC<ChatDetailScreenProps> = ({navigation, route}) 
                   <Text style={styles.typingText}>typing…</Text>
                 </View>
               ) : null}
-            </ScrollView>
+            </KeyboardAvoidingScrollView>
           )}
-
-          <Text style={styles.billingHint}>First outgoing message free, then 🪙 1 per message</Text>
-          <View style={styles.inputBarContainer}>
-            <TextInput
-              style={styles.textInput}
-              placeholder="Type a message..."
-              placeholderTextColor="rgba(255, 255, 255, 0.5)"
-              value={inputText}
-              onChangeText={setInputText}
-              onSubmitEditing={() => void handleSendMessage()}
-              returnKeyType="send"
-              editable={!isSending}
-            />
-            <TouchableOpacity
-              style={[styles.sendButton, (!inputText.trim() || isSending) && styles.sendDisabled]}
-              onPress={() => void handleSendMessage()}
-              disabled={!inputText.trim() || isSending}>
-              {isSending ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <Ionicons name="send" size={18} color="#FFFFFF" />
-              )}
-            </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
 
         <InsufficientBalanceModal
           visible={showInsufficientModal}
           currentBalance={user?.coinBalance ?? 0}
-          requiredBalance={1}
+          requiredBalance={requiredBalance}
           onClose={() => setShowInsufficientModal(false)}
           onGetTokens={() => {
             setShowInsufficientModal(false);

@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  Image,
   TouchableOpacity,
   StatusBar,
   ScrollView,
@@ -13,6 +12,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { useAuth } from '../../../context/AuthContext';
 import BottomNavBar from '../../../components/BottomNavBar';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const { width } = Dimensions.get('window');
 
@@ -21,7 +21,7 @@ interface ProfileScreenProps {
 }
 
 const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const tokens = user?.coinBalance ?? 0;
   const [claimedDays, setClaimedDays] = useState<number[]>([1]); // Day 1 claimed
 
@@ -55,11 +55,11 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   ];
 
   const menuItems = [
-    { id: 'tasks', title: 'Tasks', icon: '📅' },
-    { id: 'package', title: 'Package', icon: '💳' },
-    { id: 'level', title: 'My Level', icon: '💎' },
-    { id: 'verify', title: 'Verify', icon: '🛡️' },
-    { id: 'settings', title: 'Settings', icon: '⚙️', isSettings: true },
+    { id: 'tasks', title: 'Tasks', icon: 'calendar-outline', color: '#38BDF8' },
+    { id: 'package', title: 'Package', icon: 'wallet-outline', color: '#F43F5E' },
+    { id: 'level', title: 'My Level', icon: 'trophy-outline', color: '#FBBF24' },
+    { id: 'verify', title: 'Verify', icon: 'shield-checkmark-outline', color: '#10B981' },
+    { id: 'settings', title: 'Settings', icon: 'settings-outline', color: '#A855F7', isSettings: true },
   ];
 
   return (
@@ -76,50 +76,39 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
           {/* Top Profile Header */}
           <View style={styles.profileHeader}>
             <View style={styles.avatarCircle}>
-              <Text style={styles.avatarInitial}>I</Text>
+              <Text style={styles.avatarInitial}>
+                {user?.gender === 'female' ? 'F' : 'G'}
+              </Text>
             </View>
 
             <View style={styles.profileInfoCol}>
               <View style={styles.nameRow}>
-                <Text style={styles.profileName}>flex</Text>
-                <Text style={styles.headerChevron}>›</Text>
+                <Text style={styles.profileName}>
+                  {user?.gender === 'female' ? 'Female User' : 'Guest'}
+                </Text>
+                <Ionicons name="chevron-forward" size={18} color="rgba(255, 255, 255, 0.6)" />
               </View>
 
               <View style={styles.locationTagRow}>
-                <Text style={styles.locationTagText}>📍 India</Text>
-                <Text style={styles.genderTagText}>♂ 64</Text>
+                <Ionicons name="location" size={13} color="#FF2A85" />
+                <Text style={styles.locationTagText}>India</Text>
+                <Text style={styles.genderTagText}>
+                  {user?.gender === 'female' ? '♀' : '♂'}
+                </Text>
               </View>
-            </View>
-          </View>
-
-          {/* Fans / Following / Friends Stats Bar */}
-          <View style={styles.statsContainer}>
-            <View style={styles.statBox}>
-              <Text style={styles.statNumber}>0</Text>
-              <Text style={styles.statLabel}>Fans</Text>
-            </View>
-
-            <View style={styles.statBox}>
-              <Text style={styles.statNumber}>0</Text>
-              <Text style={styles.statLabel}>Following</Text>
-            </View>
-
-            <View style={styles.statBox}>
-              <Text style={styles.statNumber}>0</Text>
-              <Text style={styles.statLabel}>Friends</Text>
             </View>
           </View>
 
           {/* Tokens / Wallet Banner */}
           <View style={styles.tokensCard}>
             <View style={styles.tokensLeft}>
-              <View style={styles.coinsStackIcon}>
-                <Text style={{ fontSize: 24 }}>🪙</Text>
-              </View>
               <View style={styles.tokensBadgePill}>
-                <Text style={styles.tokensBadgeText}>Tokens</Text>
+                <Text style={{ fontSize: 24 }}>🪙</Text>
+                <View>
+                  <Text style={styles.tokensBadgeText}>Tokens</Text>
+                  <Text style={styles.tokensAmount}>{tokens}</Text>
+                </View>
               </View>
-              <Text style={styles.tokensAmount}>{tokens}</Text>
             </View>
 
             <TouchableOpacity
@@ -127,7 +116,8 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
               onPress={() => navigation?.navigate('GetTokens')}
               activeOpacity={0.85}
             >
-              <Text style={styles.getTokensText}>Get Tokens ›</Text>
+              <Text style={styles.getTokensText}>Get Tokens</Text>
+              <Ionicons name="chevron-forward" size={14} color="#FFFFFF" style={{ marginLeft: 2 }} />
             </TouchableOpacity>
           </View>
 
@@ -152,9 +142,9 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
 
                     <View style={styles.bonusIconCircle}>
                       {isClaimed ? (
-                        <Text style={styles.checkIcon}>✓</Text>
+                        <Ionicons name="checkmark-circle" size={22} color="#10B981" />
                       ) : (
-                        <Text style={{ fontSize: 16 }}>💳</Text>
+                        <Text style={{ fontSize: 16 }}>🪙</Text>
                       )}
                     </View>
 
@@ -182,11 +172,13 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
                 activeOpacity={0.7}
               >
                 <View style={styles.menuLeft}>
-                  <Text style={styles.menuIcon}>{item.icon}</Text>
+                  <View style={[styles.menuIconBox, { backgroundColor: `${item.color}20` }]}>
+                    <Ionicons name={item.icon} size={20} color={item.color} />
+                  </View>
                   <Text style={styles.menuTitle}>{item.title}</Text>
                 </View>
 
-                <Text style={styles.menuChevron}>›</Text>
+                <Ionicons name="chevron-forward" size={18} color="rgba(255, 255, 255, 0.45)" />
               </TouchableOpacity>
             ))}
           </View>
@@ -248,44 +240,20 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     marginRight: 6,
   },
-  headerChevron: {
-    color: 'rgba(255, 255, 255, 0.6)',
-    fontSize: 20,
-    fontWeight: '300',
-  },
   locationTagRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 4,
   },
   locationTagText: {
     color: 'rgba(255, 255, 255, 0.75)',
     fontSize: 13,
     fontWeight: '600',
+    marginRight: 8,
   },
   genderTagText: {
     color: 'rgba(255, 255, 255, 0.75)',
     fontSize: 13,
-    fontWeight: '600',
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 24,
-    backgroundColor: 'transparent',
-  },
-  statBox: {
-    alignItems: 'center',
-  },
-  statNumber: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    marginBottom: 2,
-  },
-  statLabel: {
-    fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.65)',
     fontWeight: '600',
   },
   tokensCard: {
@@ -304,15 +272,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  coinsStackIcon: {
-    marginRight: 8,
-  },
   tokensBadgePill: {
     backgroundColor: '#000000',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
     borderRadius: 12,
     marginRight: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    justifyContent: 'center',
   },
   tokensBadgeText: {
     color: '#FFFFFF',
@@ -326,9 +295,11 @@ const styles = StyleSheet.create({
   },
   getTokensBtn: {
     backgroundColor: '#FF1493',
-    paddingHorizontal: 18,
+    paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   getTokensText: {
     color: '#FFFFFF',
@@ -355,7 +326,7 @@ const styles = StyleSheet.create({
   bonusDayBox: {
     width: 64,
     height: 78,
-    borderRadius: 14,
+    borderRadius: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -381,11 +352,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 4,
   },
-  checkIcon: {
-    color: '#10B981',
-    fontSize: 16,
-    fontWeight: '900',
-  },
   bonusDayLabel: {
     color: 'rgba(255, 255, 255, 0.65)',
     fontSize: 11,
@@ -402,7 +368,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 16,
+    paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.08)',
   },
@@ -413,19 +379,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  menuIcon: {
-    fontSize: 20,
+  menuIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginRight: 14,
   },
   menuTitle: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '800',
-  },
-  menuChevron: {
-    color: 'rgba(255, 255, 255, 0.45)',
-    fontSize: 20,
-    fontWeight: '300',
   },
 });
 

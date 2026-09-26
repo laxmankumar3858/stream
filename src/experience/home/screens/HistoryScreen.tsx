@@ -128,7 +128,7 @@ const HistoryScreen: React.FC<HistoryScreenProps> = ({navigation}) => {
                     <Text style={styles.callTitle}>
                       {item.callKind === 'live'
                         ? item.peerName || 'Live user'
-                        : 'Video match'}
+                        : 'Live Call'}
                     </Text>
                     <Text style={styles.timeText}>{formatCallTime(item.startedAt)}</Text>
                   </View>

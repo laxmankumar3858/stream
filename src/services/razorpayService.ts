@@ -43,7 +43,7 @@ export const createRazorpayOrder = async (
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Basic ${btoa(`${RAZORPAY_KEY_ID}:${KEY_SECRET}`)}`,
+      Authorization: `Basic ${Buffer.from(`${RAZORPAY_KEY_ID}:${KEY_SECRET}`).toString('base64')}`,
     },
     body: JSON.stringify({
       amount: amountInPaise,
