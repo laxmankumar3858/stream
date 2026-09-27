@@ -291,3 +291,5 @@ const styles = StyleSheet.create({
 });
 
 export default WelcomeScreen;
+
+export default WelcomeScreen;

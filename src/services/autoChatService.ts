@@ -3,12 +3,15 @@ import {
   AUTO_CHAT_PROFILES,
   AutoChatProfile,
   ProfileGender,
+  getUniqueOpenerForProfile,
+  normalizeChatMessage,
 } from '../data/autoChatData';
 import {supabase} from '../lib/supabase';
 
 const THREAD_PREFIX = '@stream/auto_chat_thread:';
 const ACTIVE_THREADS_KEY = '@stream/active_chat_thread_ids';
 const FIRST_LOGIN_TIME_KEY = '@stream/first_login_time';
+const ALL_USED_INCOMING_KEY = '@stream/all_used_incoming_messages';
 const MAX_LOCAL_MESSAGES = 200;
 
 export interface AutoChatMessage {
@@ -67,6 +70,69 @@ export const addActiveThreadId = async (profileId: string): Promise<void> => {
   } catch {}
 };
 
+export const getAllUsedIncomingMessages = async (
+  excludeProfileId?: string,
+): Promise<string[]> => {
+  const activeIds = await getActiveThreadIds();
+  const usedMessages: string[] = [];
+  const seenNorm = new Set<string>();
+
+  for (const id of activeIds) {
+    if (excludeProfileId && id === excludeProfileId) {
+      continue;
+    }
+    try {
+      const stored = await AsyncStorage.getItem(threadKey(id));
+      if (stored) {
+        const parsed = JSON.parse(stored) as AutoChatMessage[];
+        if (Array.isArray(parsed)) {
+          for (const msg of parsed) {
+            if (!msg.isUser && msg.text) {
+              const norm = normalizeChatMessage(msg.text);
+              if (norm && !seenNorm.has(norm)) {
+                seenNorm.add(norm);
+                usedMessages.push(msg.text);
+              }
+            }
+          }
+        }
+      }
+    } catch {}
+  }
+
+  try {
+    const rawHistory = await AsyncStorage.getItem(ALL_USED_INCOMING_KEY);
+    if (rawHistory) {
+      const historyParsed = JSON.parse(rawHistory);
+      if (Array.isArray(historyParsed)) {
+        for (const t of historyParsed) {
+          if (typeof t === 'string') {
+            const norm = normalizeChatMessage(t);
+            if (norm && !seenNorm.has(norm)) {
+              seenNorm.add(norm);
+              usedMessages.push(t);
+            }
+          }
+        }
+      }
+    }
+  } catch {}
+
+  return usedMessages;
+};
+
+export const recordUsedIncomingMessage = async (text: string): Promise<void> => {
+  try {
+    const raw = await AsyncStorage.getItem(ALL_USED_INCOMING_KEY);
+    const list: string[] = raw ? JSON.parse(raw) : [];
+    const norm = normalizeChatMessage(text);
+    if (!list.some(item => normalizeChatMessage(item) === norm)) {
+      list.push(text);
+      await AsyncStorage.setItem(ALL_USED_INCOMING_KEY, JSON.stringify(list.slice(-500)));
+    }
+  } catch {}
+};
+
 export const loadAutoChatThread = async (
   profile: AutoChatProfile,
 ): Promise<AutoChatMessage[]> => {
@@ -85,7 +151,11 @@ export const loadAutoChatThread = async (
   }
 
   if (messages.length === 0) {
-    messages = [makeChatMessage(profile.firstMessage, false, true)];
+    const usedMessages = await getAllUsedIncomingMessages(profile.id);
+    const initialText = getUniqueOpenerForProfile(profile, usedMessages);
+    await recordUsedIncomingMessage(initialText);
+
+    messages = [makeChatMessage(initialText, false, true)];
     await AsyncStorage.setItem(threadKey(profile.id), JSON.stringify(messages));
   } else {
     // Mark all unread incoming messages as read
@@ -131,17 +201,44 @@ export const getActiveChatSummaries = async (
   );
 
   const summaries: ActiveChatSummary[] = [];
+  const usedNormInSummaries = new Set<string>();
 
   for (const profile of candidateProfiles) {
     try {
       const stored = await AsyncStorage.getItem(threadKey(profile.id));
       if (stored) {
-        const parsed = JSON.parse(stored) as AutoChatMessage[];
+        let parsed = JSON.parse(stored) as AutoChatMessage[];
         if (Array.isArray(parsed) && parsed.length > 0) {
+          // Detect if incoming first message is duplicate across different profiles
+          const firstIncomingIndex = parsed.findIndex(m => !m.isUser);
+          if (firstIncomingIndex !== -1) {
+            const firstIncoming = parsed[firstIncomingIndex];
+            const norm = normalizeChatMessage(firstIncoming.text);
+
+            if (usedNormInSummaries.has(norm)) {
+              // Duplicate found! Replace with a distinct variation
+              const newText = getUniqueOpenerForProfile(
+                profile,
+                Array.from(usedNormInSummaries),
+              );
+              parsed[firstIncomingIndex] = {
+                ...firstIncoming,
+                text: newText,
+              };
+              await saveAutoChatThread(profile.id, parsed);
+              await recordUsedIncomingMessage(newText);
+            }
+          }
+
+          const lastMsg = parsed[parsed.length - 1];
+          if (!lastMsg.isUser) {
+            usedNormInSummaries.add(normalizeChatMessage(lastMsg.text));
+          }
+
           const unreadCount = parsed.filter(m => !m.isUser && m.isRead === false).length;
           summaries.push({
             profile,
-            lastMessage: parsed[parsed.length - 1],
+            lastMessage: lastMsg,
             unreadCount,
           });
         }
@@ -169,7 +266,11 @@ export const triggerAutoIncomingMessage = async (
   }
 
   const chosenProfile = pool[Math.floor(Math.random() * pool.length)];
-  const initialMsg = makeChatMessage(chosenProfile.firstMessage, false, false);
+  const usedMessages = await getAllUsedIncomingMessages();
+  const initialText = getUniqueOpenerForProfile(chosenProfile, usedMessages);
+  await recordUsedIncomingMessage(initialText);
+
+  const initialMsg = makeChatMessage(initialText, false, false);
 
   await saveAutoChatThread(chosenProfile.id, [initialMsg]);
 

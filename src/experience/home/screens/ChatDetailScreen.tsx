@@ -25,13 +25,16 @@ import {
   BOY_PROFILES,
   GIRL_PROFILES,
   createContextReply,
-  INACTIVITY_NUDGES,
+  getUniqueInactivityNudge,
+  getUniqueOpenerForProfile,
 } from '../../../data/autoChatData';
 import {
   AutoChatMessage,
   chargeOutgoingChatMessage,
+  getAllUsedIncomingMessages,
   loadAutoChatThread,
   makeChatMessage,
+  recordUsedIncomingMessage,
   saveAutoChatThread,
 } from '../../../services/autoChatService';
 
@@ -87,14 +90,18 @@ const ChatDetailScreen: React.FC<ChatDetailScreenProps> = ({navigation, route}) 
       clearTimeout(nudgeTimerRef.current);
     }
     const delay = 18_000 + Math.floor(Math.random() * 17_000);
-    nudgeTimerRef.current = setTimeout(() => {
+    nudgeTimerRef.current = setTimeout(async () => {
       if (!mountedRef.current || isTyping) {
         return;
       }
-      const nudge = INACTIVITY_NUDGES[
-        Math.floor(Math.random() * INACTIVITY_NUDGES.length)
-      ];
-      appendMessage(makeChatMessage(nudge, false));
+      try {
+        const used = await getAllUsedIncomingMessages(chatUser.id);
+        const nudge = getUniqueInactivityNudge(used);
+        await recordUsedIncomingMessage(nudge);
+        appendMessage(makeChatMessage(nudge, false));
+      } catch {
+        appendMessage(makeChatMessage('Kya huaa? 😊', false));
+      }
       scheduleNudge();
     }, delay);
   };
@@ -111,10 +118,19 @@ const ChatDetailScreen: React.FC<ChatDetailScreenProps> = ({navigation, route}) 
         setMessages(storedMessages);
         scheduleNudge();
       })
-      .catch(() => {
-        const initial = [makeChatMessage(chatUser.firstMessage, false)];
-        messagesRef.current = initial;
-        setMessages(initial);
+      .catch(async () => {
+        try {
+          const used = await getAllUsedIncomingMessages(chatUser.id);
+          const uniqueText = getUniqueOpenerForProfile(chatUser, used);
+          await recordUsedIncomingMessage(uniqueText);
+          const initial = [makeChatMessage(uniqueText, false)];
+          messagesRef.current = initial;
+          setMessages(initial);
+        } catch {
+          const initial = [makeChatMessage(chatUser.firstMessage, false)];
+          messagesRef.current = initial;
+          setMessages(initial);
+        }
       })
       .finally(() => {
         if (mountedRef.current) {
@@ -175,11 +191,18 @@ const ChatDetailScreen: React.FC<ChatDetailScreenProps> = ({navigation, route}) 
         clearTimeout(nudgeTimerRef.current);
       }
 
-      replyTimerRef.current = setTimeout(() => {
+      replyTimerRef.current = setTimeout(async () => {
         if (!mountedRef.current) {
           return;
         }
-        appendMessage(makeChatMessage(createContextReply(chatUser, text), false));
+        try {
+          const used = await getAllUsedIncomingMessages(chatUser.id);
+          const replyText = createContextReply(chatUser, text, used);
+          await recordUsedIncomingMessage(replyText);
+          appendMessage(makeChatMessage(replyText, false));
+        } catch {
+          appendMessage(makeChatMessage(createContextReply(chatUser, text), false));
+        }
         setIsTyping(false);
         scheduleNudge();
       }, 900 + Math.floor(Math.random() * 900));
